@@ -1,0 +1,384 @@
+---
+title: "FunOlympics Dashboard"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: rows
+    vertical_layout: scroll
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(shiny)
+library(shinythemes)
+library(tidyverse)
+library(lubridate)
+library(plotly)
+library(DT)
+library(readr)
+```
+
+```{r global, include=FALSE}
+data <- readr::read_csv("log_data.csv")
+
+# convert time to character
+data$time <- as.character(data[["time"]])
+
+# convert time column to time-stamp
+data$time <- as.POSIXct(data$time, format = "%H:%M:%S")
+
+
+hourly_requests <- data %>%
+  group_by(time = floor_date(time, 'hour')) %>%
+  summarize(n = n())
+
+# grouping status codes --> successful and failed
+data <- data %>% 
+  mutate(
+    request_success = dplyr::case_when(
+      status_code == 200 | status_code == 304 ~ "Successful",
+      status_code == 404 | status_code == 500 ~ "Failed"
+    ),
+    # Convert to factor
+    request_success = factor(
+      request_success,
+      level = c("Successful", "Failed")
+    )
+  )
+
+successful_requests <- data %>%
+  filter(request_success == "Successful") %>%
+  summarize(n = n())
+
+failed_requests <- data %>%
+  filter(request_success == "Failed") %>%
+  summarize(n = n())
+
+continent_requests <- data %>%
+  filter(!is.na(continent)) %>%
+  group_by(continent) %>%
+  summarize(n = n())
+
+country_requests <- data %>%
+  group_by(country) %>%
+  summarize(n = n())
+
+
+country_requests$hover <- with(country_requests, paste(country_requests$country,'<br>', 'Total Visits: ', country_requests$n))
+
+# path --> sporting events
+data <- data %>% 
+  mutate(
+    sporting_event = dplyr::case_match(
+      path,
+      "/basketball.php" ~ "Basketball",
+      "/table-tennis.php" ~ "Table Tennis",
+      "/tennis.php" ~ "Tennis",
+      "/athletics/track.php" ~ "Athletics - Track",
+      "/athletics/field.php" ~ "Athletics - Field",
+      "/volleyball.php" ~ "Volleyball",
+      "/cycling.php" ~ "Cycling",
+      "/diving.php" ~ "Diving",
+      "/gymnastics.php" ~ "Gymnastics",
+      "/weightlifting.php" ~ "Weightlifting",
+      "/rowing.php" ~ "Rowing",
+      "/football.php" ~ "Football",
+      "/swimming.php" ~ "Swimming",
+      "/water-polo.php" ~ "Water Polo",
+      "/wrestling.php" ~ "Wrestling",
+      "/karate.php" ~ "Karate"
+    ))
+
+path_requests <- data %>%
+  filter(!is.na(sporting_event)) %>%
+  group_by(sporting_event) %>%
+  summarize(n = n())
+
+
+gender_requests <- data %>%
+  group_by(gender) %>%
+  summarize(n = n())
+
+# grouping users into age groups
+data <- data %>% 
+  mutate(
+    age_group = dplyr::case_when(
+      age <= 24             ~ "16-24",
+      age >= 25 & age <= 34 ~ "25-34",
+      age >= 35 & age <= 44 ~ "35-44",
+      age >= 45 & age <= 54 ~ "45-54",
+      age >= 55 & age <= 64 ~ "55-64",
+      age >= 65             ~ "65+"
+    ),
+    # Convert to factor
+    age_group = factor(
+      age_group,
+      level = c("16-24", "25-34","35-44", "45-54", "55-64", "65+")
+    )
+  )
+
+age_requests <- data %>%
+  group_by(age_group) %>%
+  summarize(n = n())
+```
+
+
+Home
+===============================================
+
+Inputs {.sidebar data-width=200}
+-----------------------------------------------
+```{r}
+selectInput("country_select",
+            "Country:",
+            choices = country_requests$country,
+            selected = country_requests$country[[1]])
+```
+
+<hr/>
+
+```{r}
+selectInput("continent_select",
+            "Continent:",
+            choices = continent_requests$continent,
+            selected = continent_requests$continent[[1]])
+```
+
+<hr/>
+
+```{r}
+selectInput("sport_select",
+            "Sporting Event:",
+            choices = path_requests$sporting_event,
+            selected = path_requests$sporting_event[[1]])
+```
+
+Row
+-----------------------------------------------
+
+###
+
+```{r}
+renderValueBox({
+  count_requests <- nrow(data)
+  valueBox("Total Requests", value = count_requests, color = "blue")
+})
+```
+
+###
+
+```{r}
+renderValueBox({
+  succ_requests <- successful_requests$n
+  valueBox("Succesful Requests", value = succ_requests, color = "green")
+})
+```
+
+###
+
+```{r}
+renderValueBox({
+  fail_requests <- failed_requests$n
+  valueBox("Failed Requests", value = fail_requests, color = "red")
+})
+```
+
+
+Row 
+--------------------------------------------------
+
+### Average Viewership per Time of Day
+
+```{r}
+renderPlotly({
+  filtered_data <- data %>%
+    filter(country == input$country_select,
+           continent == input$continent_select)
+  
+  hourly_requests <- filtered_data %>%
+    group_by(time = floor_date(time, 'hour')) %>%
+    summarize(n = n())
+  
+  plot_ly(hourly_requests, type = "scatter", mode = "lines", x = ~time, y = ~n) %>%
+    layout(
+      showlegend = FALSE, 
+      xaxis = list(title = "Time", 
+                   rangeslider = list(visible = TRUE), 
+                   zerolinecolor = "#FFFF",
+                   zerolinewidth = 2,
+                   gridcolor = "#FFFF"), 
+      yaxis = list(title = "Requests",
+                   zerolinecolor = "#FFFF",
+                   zerolinewidth = 2,
+                   gridcolor = "#FFFF"),
+      plot_bgcolor = "#E5ECF6"
+    )
+})
+```
+
+
+Row
+----------------------------------------------------------
+
+### Viewership Preference of Sporting Events
+
+```{r}
+renderPlotly({
+  filtered_data <- data %>%
+    filter(country == input$country_select,
+           continent == input$continent_select)
+  
+  path_requests <- filtered_data %>%
+    filter(!is.na(sporting_event)) %>%
+    group_by(sporting_event) %>%
+    summarize(n = n())
+  
+  plot_ly(path_requests, type = "bar", x = ~n, y = ~sporting_event) %>%
+    layout(yaxis = list(title = 'Sporting Events'), barmode = 'group')
+})
+```
+
+### Average Viewership by Age
+
+```{r}
+renderPlotly({
+  filtered_data <- data %>%
+    filter(country == input$country_select,
+           continent == input$continent_select,
+           sporting_event == input$sport_select)
+  
+  age_requests <- filtered_data %>%
+    group_by(age_group) %>%
+    summarize(n = n())
+  
+  plot_ly(age_requests, type = "bar", x = ~age_group, y = ~n)
+})
+```
+
+### Average Viewership by Gender 
+
+```{r}
+renderPlotly({
+  filtered_data <- data %>%
+    filter(country == input$country_select,
+           continent == input$continent_select,
+           sporting_event == input$sport_select)
+  
+  gender_requests <- filtered_data %>%
+    group_by(gender) %>%
+    summarize(n = n())
+  
+  plot_ly(gender_requests, labels = ~gender, values = ~n) %>%
+    add_pie(hole = 0.6)
+})
+```
+
+
+Map
+================================================
+
+Inputs {.sidebar data-width=200}
+-----------------------------------------------
+
+```{r}
+selectInput("sport_select",
+            "Sporting Event:",
+            choices = path_requests$sporting_event,
+            selected = path_requests$sporting_event[[1]])
+```
+
+Row 
+------------------------------------------------
+
+### Average Viewership per Country
+
+```{r fig.width=10, fig.height=6}
+renderPlotly({
+  filtered_data <- data %>%
+    filter(sporting_event == input$sport_select)
+  
+  country_requests <- filtered_data %>%
+    group_by(country) %>%
+    summarize(n = n())
+  
+  map <- plot_geo( 
+    data = country_requests,
+    z = ~n, 
+    locationmode = "country names",  
+    locations = ~country,
+    text = ~paste(country, '<br>', 'Total Visits: ', n),
+    marker = list(line = list(color = "black", width = 0.6))
+  ) %>% colorbar(title = "Visits")
+})
+```
+
+Concurrent Sporting Events
+===================================================
+
+Inputs {.sidebar data-width=200}
+-----------------------------------------------
+
+```{r}
+selectInput("sport_select",
+            "Sporting Event:",
+            choices = path_requests$sporting_event,
+            selected = path_requests$sporting_event[[1]])
+```
+
+```{r}
+selectInput("sport_select",
+            "Sporting Event:",
+            choices = path_requests$sporting_event,
+            selected = path_requests$sporting_event[[1]])
+```
+
+<hr/>
+
+```{r}
+selectInput("country_select",
+            "Country:",
+            choices = country_requests$country,
+            selected = country_requests$country[[1]])
+```
+
+<hr/>
+
+```{r}
+selectInput("continent_select",
+            "Continent:",
+            choices = continent_requests$continent,
+            selected = continent_requests$continent[[1]])
+```
+
+
+Row
+---------------------------------------------------
+
+```{r}
+
+```
+
+
+Data
+===================================================
+
+Row
+---------------------------------------------------
+
+###
+
+```{r}
+DT::renderDataTable({
+  DT::datatable(data = readr::read_csv("log_data.csv"),
+               rownames = F,
+               colnames = c("time", "ip_address", "request_method",
+                            "path", "status_code", "country",
+                            "continent", "gender", "age"),
+               extensions = "Buttons",
+               options = list(pageLength = 20,
+                              scrollX = T,
+                              filter = "top",
+                              dom = "Bfrtip",
+                              buttons = c("csv", "copy", "print")))
+})
+```

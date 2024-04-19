@@ -79,7 +79,7 @@ generate_log_file <- function(num_entries) {
   close(con)
 }
   
-# Generate a log file with 500000 entries
-generate_log_file(500000)
+# Generate a log file with 100000 entries
+generate_log_file(100000)
   
     

@@ -315,7 +315,7 @@ Inputs {.sidebar data-width=200}
 -----------------------------------------------
 
 ```{r}
-selectInput("sport_select",
+selectInput("sport_select_map",
             "Sporting Event:",
             choices = path_requests$sporting_event,
             selected = path_requests$sporting_event[[1]])
@@ -329,7 +329,7 @@ Row
 ```{r fig.width=10, fig.height=6}
 renderPlotly({
   filtered_data <- data %>%
-    filter(sporting_event == input$sport_select)
+    filter(sporting_event == input$sport_select_map)
   
   country_requests <- filtered_data %>%
     group_by(country) %>%
@@ -353,14 +353,14 @@ Inputs {.sidebar data-width=200}
 -----------------------------------------------
 
 ```{r}
-selectInput("sport_select",
+selectInput("concurrent_sport_select",
             "Sporting Event:",
             choices = path_requests$sporting_event,
             selected = path_requests$sporting_event[[1]])
 ```
 
 ```{r}
-selectInput("sport_select",
+selectInput("concurrent_sport_select",
             "Sporting Event:",
             choices = path_requests$sporting_event,
             selected = path_requests$sporting_event[[1]])
@@ -369,24 +369,34 @@ selectInput("sport_select",
 <hr/>
 
 ```{r}
-selectInput("country_select",
-            "Country:",
-            choices = country_requests$country,
-            selected = country_requests$country[[1]])
+selectInput("concurrent_filter_level",
+            "Filter Level:",
+            choices = c("Country", "Continent"),
+            selected = "Country")
 ```
 
 <hr/>
 
 ```{r}
-selectInput("continent_select",
-            "Continent:",
-            choices = continent_requests$continent,
-            selected = continent_requests$continent[[1]])
-```
+output$concurrent_filter_dropdown <- renderUI({
+  if (input$concurrent_filter_level == "Country") {
+    selectInput("concurrent_country_select",
+                "Country:",
+                choices = country_requests$country)
+  } else {
+    selectInput("concurrent_continent_select",
+                "Continent:",
+                choices = continent_requests$continent)
+  }
+})
 
+uiOutput("concurrent_filter_dropdown")
+```
 
 Row
 ---------------------------------------------------
+
+### Viewership Preference for Concurrently Running Sporting Events
 
 ```{r}
 

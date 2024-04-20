@@ -129,22 +129,29 @@ Home
 Inputs {.sidebar data-width=200}
 -----------------------------------------------
 ```{r}
-selectInput("country_select",
-            "Country:",
-            choices = country_requests$country,
-            selected = country_requests$country[[1]])
+selectInput("filter_level",
+            "Filter Level:",
+            choices = c("Country", "Continent"),
+            selected = "Country")
 ```
 
 <hr/>
 
 ```{r}
-selectInput("continent_select",
-            "Continent:",
-            choices = continent_requests$continent,
-            selected = continent_requests$continent[[1]])
-```
+output$filter_dropdown <- renderUI({
+  if (input$filter_level == "Country") {
+    selectInput("country_select",
+                "Country:",
+                choices = country_requests$country)
+  } else {
+    selectInput("continent_select",
+                "Continent:",
+                choices = continent_requests$continent)
+  }
+})
 
-<hr/>
+uiOutput("filter_dropdown")
+```
 
 ```{r}
 selectInput("sport_select",
@@ -152,6 +159,7 @@ selectInput("sport_select",
             choices = path_requests$sporting_event,
             selected = path_requests$sporting_event[[1]])
 ```
+
 
 Row
 -----------------------------------------------
@@ -191,9 +199,15 @@ Row
 
 ```{r}
 renderPlotly({
-  filtered_data <- data %>%
-    filter(country == input$country_select,
-           continent == input$continent_select)
+  filtered_data <- data
+  
+  if (input$filter_level == "Country") {
+    filtered_data <- filtered_data %>%
+      filter(country == input$country_select)
+  } else {
+    filtered_data <- filtered_data %>%
+      filter(continent == input$continent_select)
+  }
   
   hourly_requests <- filtered_data %>%
     group_by(time = floor_date(time, 'hour')) %>%
@@ -224,9 +238,15 @@ Row
 
 ```{r}
 renderPlotly({
-  filtered_data <- data %>%
-    filter(country == input$country_select,
-           continent == input$continent_select)
+  filtered_data <- data
+  
+  if (input$filter_level == "Country") {
+    filtered_data <- filtered_data %>%
+      filter(country == input$country_select)
+  } else {
+    filtered_data <- filtered_data %>%
+      filter(continent == input$continent_select)
+  }
   
   path_requests <- filtered_data %>%
     filter(!is.na(sporting_event)) %>%
@@ -242,10 +262,17 @@ renderPlotly({
 
 ```{r}
 renderPlotly({
-  filtered_data <- data %>%
-    filter(country == input$country_select,
-           continent == input$continent_select,
-           sporting_event == input$sport_select)
+  filtered_data <- data
+  
+  if (input$filter_level == "Country") {
+    filtered_data <- filtered_data %>%
+      filter(country == input$country_select,
+             sporting_event == input$sport_select)
+  } else {
+    filtered_data <- filtered_data %>%
+      filter(continent == input$continent_select,
+             sporting_event == input$sport_select)
+  }
   
   age_requests <- filtered_data %>%
     group_by(age_group) %>%
@@ -259,10 +286,17 @@ renderPlotly({
 
 ```{r}
 renderPlotly({
-  filtered_data <- data %>%
-    filter(country == input$country_select,
-           continent == input$continent_select,
-           sporting_event == input$sport_select)
+  filtered_data <- data
+  
+  if (input$filter_level == "Country") {
+    filtered_data <- filtered_data %>%
+      filter(country == input$country_select,
+             sporting_event == input$sport_select)
+  } else {
+    filtered_data <- filtered_data %>%
+      filter(continent == input$continent_select,
+             sporting_event == input$sport_select)
+  }
   
   gender_requests <- filtered_data %>%
     group_by(gender) %>%

@@ -10,7 +10,6 @@ runtime: shiny
 ```{r setup, include=FALSE}
 library(flexdashboard)
 library(shiny)
-library(shinythemes)
 library(tidyverse)
 library(lubridate)
 library(plotly)
@@ -123,7 +122,7 @@ age_requests <- data %>%
 ```
 
 
-Home
+Home 
 ===============================================
 
 Inputs {.sidebar data-width=200}
@@ -161,7 +160,7 @@ selectInput("sport_select",
 ```
 
 
-Row
+Row 
 -----------------------------------------------
 
 ###
@@ -169,7 +168,7 @@ Row
 ```{r}
 renderValueBox({
   count_requests <- nrow(data)
-  valueBox("Total Requests", value = count_requests, color = "blue")
+  valueBox("Total Requests", value = count_requests, color = "darkblue")
 })
 ```
 
@@ -178,7 +177,7 @@ renderValueBox({
 ```{r}
 renderValueBox({
   succ_requests <- successful_requests$n
-  valueBox("Succesful Requests", value = succ_requests, color = "green")
+  valueBox("Succesful Requests", value = succ_requests, color = "darkgreen")
 })
 ```
 
@@ -187,7 +186,7 @@ renderValueBox({
 ```{r}
 renderValueBox({
   fail_requests <- failed_requests$n
-  valueBox("Failed Requests", value = fail_requests, color = "red")
+  valueBox("Failed Requests", value = fail_requests, color = "darkred")
 })
 ```
 
@@ -203,10 +202,10 @@ renderPlotly({
   
   if (input$filter_level == "Country") {
     filtered_data <- filtered_data %>%
-      filter(country == input$country_select)
+      filter(country %in% input$country_select)
   } else {
     filtered_data <- filtered_data %>%
-      filter(continent == input$continent_select)
+      filter(continent %in% input$continent_select)
   }
   
   hourly_requests <- filtered_data %>%
@@ -231,7 +230,7 @@ renderPlotly({
 ```
 
 
-Row
+Row 
 ----------------------------------------------------------
 
 ### Viewership Preference of Sporting Events
@@ -242,10 +241,10 @@ renderPlotly({
   
   if (input$filter_level == "Country") {
     filtered_data <- filtered_data %>%
-      filter(country == input$country_select)
+      filter(country %in% input$country_select)
   } else {
     filtered_data <- filtered_data %>%
-      filter(continent == input$continent_select)
+      filter(continent %in% input$continent_select)
   }
   
   path_requests <- filtered_data %>%
@@ -266,12 +265,12 @@ renderPlotly({
   
   if (input$filter_level == "Country") {
     filtered_data <- filtered_data %>%
-      filter(country == input$country_select,
-             sporting_event == input$sport_select)
+      filter(country %in% input$country_select,
+             sporting_event %in% input$sport_select)
   } else {
     filtered_data <- filtered_data %>%
-      filter(continent == input$continent_select,
-             sporting_event == input$sport_select)
+      filter(continent %in% input$continent_select,
+             sporting_event %in% input$sport_select)
   }
   
   age_requests <- filtered_data %>%
@@ -290,12 +289,12 @@ renderPlotly({
   
   if (input$filter_level == "Country") {
     filtered_data <- filtered_data %>%
-      filter(country == input$country_select,
-             sporting_event == input$sport_select)
+      filter(country %in% input$country_select,
+             sporting_event %in% input$sport_select)
   } else {
     filtered_data <- filtered_data %>%
-      filter(continent == input$continent_select,
-             sporting_event == input$sport_select)
+      filter(continent %in% input$continent_select,
+             sporting_event %in% input$sport_select)
   }
   
   gender_requests <- filtered_data %>%
@@ -326,10 +325,10 @@ Row
 
 ### Average Viewership per Country
 
-```{r fig.width=10, fig.height=6}
+```{r fig.width=10, fig.height=5.3}
 renderPlotly({
   filtered_data <- data %>%
-    filter(sporting_event == input$sport_select_map)
+    filter(sporting_event %in% input$sport_select_map)
   
   country_requests <- filtered_data %>%
     group_by(country) %>%
@@ -353,17 +352,17 @@ Inputs {.sidebar data-width=200}
 -----------------------------------------------
 
 ```{r}
-selectInput("concurrent_sport_select",
-            "Sporting Event:",
+selectInput("concurrent_sport_select1",
+            "Sporting Event 1:",
             choices = path_requests$sporting_event,
             selected = path_requests$sporting_event[[1]])
 ```
 
 ```{r}
-selectInput("concurrent_sport_select",
-            "Sporting Event:",
+selectInput("concurrent_sport_select2",
+            "Sporting Event 2:",
             choices = path_requests$sporting_event,
-            selected = path_requests$sporting_event[[1]])
+            selected = path_requests$sporting_event[[2]])
 ```
 
 <hr/>
@@ -399,14 +398,46 @@ Row
 ### Viewership Preference for Concurrently Running Sporting Events
 
 ```{r}
-
+renderPlotly({
+  filtered_data <- data
+  
+  if (input$concurrent_filter_level == "Country") {
+    filtered_data <- filtered_data %>%
+      filter(country %in% input$concurrent_country_select,
+             sporting_event %in% c(input$concurrent_sport_select1, input$concurrent_sport_select2))
+  } else {
+    filtered_data <- filtered_data %>%
+      filter(continent %in% input$concurrent_continent_select,
+             sporting_event %in% c(input$concurrent_sport_select1, input$concurrent_sport_select2))
+  }
+  
+  concurrent_hourly_requests <- filtered_data %>%
+    group_by(sporting_event, time = floor_date(time, 'hour')) %>%
+    summarize(n = n())
+  
+  
+  plot_ly(concurrent_hourly_requests, type = "scatter", mode = "lines", x = ~time, y = ~n, color = ~sporting_event, colors = c("darkblue", "darkred")) %>%
+    layout(
+      showlegend = TRUE, 
+      xaxis = list(title = "Time", 
+                   rangeslider = list(visible = TRUE), 
+                   zerolinecolor = "#FFFF",
+                   zerolinewidth = 2,
+                   gridcolor = "#FFFF"), 
+      yaxis = list(title = "Requests",
+                   zerolinecolor = "#FFFF",
+                   zerolinewidth = 2,
+                   gridcolor = "#FFFF"),
+      plot_bgcolor = "#E5ECF6"
+    )
+})
 ```
 
 
 Data
 ===================================================
 
-Row
+Row {data-height=535}
 ---------------------------------------------------
 
 ###
@@ -419,7 +450,7 @@ DT::renderDataTable({
                             "path", "status_code", "country",
                             "continent", "gender", "age"),
                extensions = "Buttons",
-               options = list(pageLength = 20,
+               options = list(pageLength = 100,
                               scrollX = T,
                               filter = "top",
                               dom = "Bfrtip",

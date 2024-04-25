@@ -26,48 +26,53 @@ data$time <- as.character(data[["time"]])
 # convert time column to time-stamp
 data$time <- as.POSIXct(data$time, format = "%H:%M:%S")
 
-
+# count the number of requests per hour
 hourly_requests <- data %>%
   group_by(time = floor_date(time, 'hour')) %>%
   summarize(n = n())
 
+
 # grouping status codes --> successful and failed
 data <- data %>% 
   mutate(
+    # create new 'request_success' column 
     request_success = dplyr::case_when(
       status_code == 200 | status_code == 304 ~ "Successful",
       status_code == 404 | status_code == 500 ~ "Failed"
     ),
-    # Convert to factor
+    # convert to factor
     request_success = factor(
       request_success,
       level = c("Successful", "Failed")
     )
   )
 
+# count the number of successful requests
 successful_requests <- data %>%
   filter(request_success == "Successful") %>%
   summarize(n = n())
 
+# count the number of failed requests
 failed_requests <- data %>%
   filter(request_success == "Failed") %>%
   summarize(n = n())
 
+# count the number of requests per continent
 continent_requests <- data %>%
   filter(!is.na(continent)) %>%
   group_by(continent) %>%
   summarize(n = n())
 
+# count the number of requests per country
 country_requests <- data %>%
   group_by(country) %>%
   summarize(n = n())
 
 
-country_requests$hover <- with(country_requests, paste(country_requests$country,'<br>', 'Total Visits: ', country_requests$n))
-
-# path --> sporting events
+# create aliases for URL paths
 data <- data %>% 
   mutate(
+    # create new 'sporting_event' column
     sporting_event = dplyr::case_match(
       path,
       "/basketball.php" ~ "Basketball",
@@ -88,12 +93,13 @@ data <- data %>%
       "/karate.php" ~ "Karate"
     ))
 
+# count the number of requests for each sporting event
 path_requests <- data %>%
   filter(!is.na(sporting_event)) %>%
   group_by(sporting_event) %>%
   summarize(n = n())
 
-
+# count the number of requests by gender
 gender_requests <- data %>%
   group_by(gender) %>%
   summarize(n = n())
@@ -101,6 +107,7 @@ gender_requests <- data %>%
 # grouping users into age groups
 data <- data %>% 
   mutate(
+    # create new 'age_group' column
     age_group = dplyr::case_when(
       age <= 24             ~ "16-24",
       age >= 25 & age <= 34 ~ "25-34",
@@ -109,13 +116,14 @@ data <- data %>%
       age >= 55 & age <= 64 ~ "55-64",
       age >= 65             ~ "65+"
     ),
-    # Convert to factor
+    # convert to factor
     age_group = factor(
       age_group,
       level = c("16-24", "25-34","35-44", "45-54", "55-64", "65+")
     )
   )
 
+# count the number of requests by age group
 age_requests <- data %>%
   group_by(age_group) %>%
   summarize(n = n())
@@ -128,6 +136,7 @@ Home
 Inputs {.sidebar data-width=200}
 -----------------------------------------------
 ```{r}
+# filter level drop-down filter
 selectInput("filter_level",
             "Filter Level:",
             choices = c("Country", "Continent"),
@@ -137,6 +146,7 @@ selectInput("filter_level",
 <hr/>
 
 ```{r}
+# country and continent drop-down filter depending on selected filter level
 output$filter_dropdown <- renderUI({
   if (input$filter_level == "Country") {
     selectInput("country_select",
@@ -153,6 +163,7 @@ uiOutput("filter_dropdown")
 ```
 
 ```{r}
+# sporting event drop-down filter
 selectInput("sport_select",
             "Sporting Event:",
             choices = path_requests$sporting_event,
@@ -166,6 +177,7 @@ Row
 ###
 
 ```{r}
+# value box displaying the total number of requests
 renderValueBox({
   count_requests <- nrow(data)
   valueBox("Total Requests", value = count_requests, color = "darkblue")
@@ -175,6 +187,7 @@ renderValueBox({
 ###
 
 ```{r}
+# value box displaying the total number of successful requests
 renderValueBox({
   succ_requests <- successful_requests$n
   valueBox("Succesful Requests", value = succ_requests, color = "darkgreen")
@@ -184,6 +197,7 @@ renderValueBox({
 ###
 
 ```{r}
+# value box displaying the total number of failed requests
 renderValueBox({
   fail_requests <- failed_requests$n
   valueBox("Failed Requests", value = fail_requests, color = "darkred")
@@ -200,6 +214,7 @@ Row
 renderPlotly({
   filtered_data <- data
   
+  # filter data depending on user selected filter level
   if (input$filter_level == "Country") {
     filtered_data <- filtered_data %>%
       filter(country %in% input$country_select)
@@ -212,6 +227,7 @@ renderPlotly({
     group_by(time = floor_date(time, 'hour')) %>%
     summarize(n = n())
   
+  # generate interactive line plot
   plot_ly(hourly_requests, type = "scatter", mode = "lines", x = ~time, y = ~n) %>%
     layout(
       showlegend = FALSE, 
@@ -239,6 +255,7 @@ Row
 renderPlotly({
   filtered_data <- data
   
+  # filter data depending on user selected filter level
   if (input$filter_level == "Country") {
     filtered_data <- filtered_data %>%
       filter(country %in% input$country_select)
@@ -252,8 +269,12 @@ renderPlotly({
     group_by(sporting_event) %>%
     summarize(n = n())
   
+  # generate interactive bar plot
   plot_ly(path_requests, type = "bar", x = ~n, y = ~sporting_event) %>%
-    layout(yaxis = list(title = 'Sporting Events'), barmode = 'group')
+    layout(
+      xaxis = list(title = 'Requests'),
+      yaxis = list(title = 'Sporting Events'), 
+      barmode = 'group')
 })
 ```
 
@@ -263,6 +284,7 @@ renderPlotly({
 renderPlotly({
   filtered_data <- data
   
+  # filter data depending on user selected filter level
   if (input$filter_level == "Country") {
     filtered_data <- filtered_data %>%
       filter(country %in% input$country_select,
@@ -277,7 +299,12 @@ renderPlotly({
     group_by(age_group) %>%
     summarize(n = n())
   
-  plot_ly(age_requests, type = "bar", x = ~age_group, y = ~n)
+  # generate interactive bar plot
+  plot_ly(age_requests, type = "bar", x = ~age_group, y = ~n) %>%
+    layout(
+      xaxis = list(title = 'Age Group'),
+      yaxis = list(title = 'Requests')
+    )
 })
 ```
 
@@ -287,6 +314,7 @@ renderPlotly({
 renderPlotly({
   filtered_data <- data
   
+  # filter data depending on user selected filter level
   if (input$filter_level == "Country") {
     filtered_data <- filtered_data %>%
       filter(country %in% input$country_select,
@@ -301,6 +329,7 @@ renderPlotly({
     group_by(gender) %>%
     summarize(n = n())
   
+  # generate interactive doughnut chart
   plot_ly(gender_requests, labels = ~gender, values = ~n) %>%
     add_pie(hole = 0.6)
 })
@@ -314,6 +343,7 @@ Inputs {.sidebar data-width=200}
 -----------------------------------------------
 
 ```{r}
+# sporting event drop-down filter
 selectInput("sport_select_map",
             "Sporting Event:",
             choices = path_requests$sporting_event,
@@ -334,7 +364,8 @@ renderPlotly({
     group_by(country) %>%
     summarize(n = n())
   
-  map <- plot_geo( 
+  # generate interactive choropleth map
+  plot_geo( 
     data = country_requests,
     z = ~n, 
     locationmode = "country names",  
@@ -351,7 +382,12 @@ Concurrent Sporting Events
 Inputs {.sidebar data-width=200}
 -----------------------------------------------
 
+Select two sporting events to compare their viewership numbers at different times of the day.
+
+<hr/>
+
 ```{r}
+# sporting event drop-down filter
 selectInput("concurrent_sport_select1",
             "Sporting Event 1:",
             choices = path_requests$sporting_event,
@@ -359,6 +395,7 @@ selectInput("concurrent_sport_select1",
 ```
 
 ```{r}
+# sporting event drop-down filter
 selectInput("concurrent_sport_select2",
             "Sporting Event 2:",
             choices = path_requests$sporting_event,
@@ -368,15 +405,17 @@ selectInput("concurrent_sport_select2",
 <hr/>
 
 ```{r}
+# filter level drop-down filter
 selectInput("concurrent_filter_level",
             "Filter Level:",
             choices = c("Country", "Continent"),
-            selected = "Country")
+            selected = "Continent")
 ```
 
 <hr/>
 
 ```{r}
+# # country and continent drop-down filter depending on selected filter level
 output$concurrent_filter_dropdown <- renderUI({
   if (input$concurrent_filter_level == "Country") {
     selectInput("concurrent_country_select",
@@ -401,6 +440,7 @@ Row
 renderPlotly({
   filtered_data <- data
   
+  # filter data depending on user selected filter level
   if (input$concurrent_filter_level == "Country") {
     filtered_data <- filtered_data %>%
       filter(country %in% input$concurrent_country_select,
@@ -415,7 +455,7 @@ renderPlotly({
     group_by(sporting_event, time = floor_date(time, 'hour')) %>%
     summarize(n = n())
   
-  
+  # generate interactive line plot
   plot_ly(concurrent_hourly_requests, type = "scatter", mode = "lines", x = ~time, y = ~n, color = ~sporting_event, colors = c("darkblue", "darkred")) %>%
     layout(
       showlegend = TRUE, 
@@ -443,6 +483,7 @@ Row {data-height=535}
 ###
 
 ```{r}
+# display interactive data table
 DT::renderDataTable({
   DT::datatable(data = readr::read_csv("log_data.csv"),
                rownames = F,

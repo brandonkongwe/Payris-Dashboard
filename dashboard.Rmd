@@ -4,6 +4,7 @@ output:
   flexdashboard::flex_dashboard:
     orientation: rows
     vertical_layout: scroll
+    theme: flatly
 runtime: shiny
 ---
 
@@ -133,14 +134,14 @@ age_requests <- data %>%
 Home 
 ===============================================
 
-Inputs {.sidebar data-width=200}
+Inputs {.sidebar data-width=170}
 -----------------------------------------------
 ```{r}
 # filter level drop-down filter
 selectInput("filter_level",
             "Filter Level:",
             choices = c("Country", "Continent"),
-            selected = "Country")
+            selected = "Continent")
 ```
 
 <hr/>
@@ -180,7 +181,7 @@ Row
 # value box displaying the total number of requests
 renderValueBox({
   count_requests <- nrow(data)
-  valueBox("Total Requests", value = count_requests, color = "darkblue")
+  valueBox("Total Requests", value = count_requests, color = "#326fa8")
 })
 ```
 
@@ -190,7 +191,7 @@ renderValueBox({
 # value box displaying the total number of successful requests
 renderValueBox({
   succ_requests <- successful_requests$n
-  valueBox("Succesful Requests", value = succ_requests, color = "darkgreen")
+  valueBox("Succesful Requests", value = succ_requests, color = "#32a875")
 })
 ```
 
@@ -200,7 +201,7 @@ renderValueBox({
 # value box displaying the total number of failed requests
 renderValueBox({
   fail_requests <- failed_requests$n
-  valueBox("Failed Requests", value = fail_requests, color = "darkred")
+  valueBox("Failed Requests", value = fail_requests, color = "#a83244")
 })
 ```
 
@@ -251,7 +252,7 @@ Row
 
 ### Viewership Preference of Sporting Events
 
-```{r}
+```{r fig.width=8}
 renderPlotly({
   filtered_data <- data
   
@@ -272,6 +273,7 @@ renderPlotly({
   # generate interactive bar plot
   plot_ly(path_requests, type = "bar", x = ~n, y = ~sporting_event) %>%
     layout(
+      showlegend = FALSE,
       xaxis = list(title = 'Requests'),
       yaxis = list(title = 'Sporting Events'), 
       barmode = 'group')
@@ -300,8 +302,9 @@ renderPlotly({
     summarize(n = n())
   
   # generate interactive bar plot
-  plot_ly(age_requests, type = "bar", x = ~age_group, y = ~n) %>%
+  plot_ly(age_requests, type = "bar", color = ~age_group, x = ~age_group, y = ~n) %>%
     layout(
+      showlegend = FALSE,
       xaxis = list(title = 'Age Group'),
       yaxis = list(title = 'Requests')
     )
@@ -310,7 +313,7 @@ renderPlotly({
 
 ### Average Viewership by Gender 
 
-```{r}
+```{r fig.width=7}
 renderPlotly({
   filtered_data <- data
   
@@ -339,7 +342,7 @@ renderPlotly({
 Map
 ================================================
 
-Inputs {.sidebar data-width=200}
+Inputs {.sidebar data-width=170}
 -----------------------------------------------
 
 ```{r}
@@ -456,7 +459,7 @@ renderPlotly({
     summarize(n = n())
   
   # generate interactive line plot
-  plot_ly(concurrent_hourly_requests, type = "scatter", mode = "lines", x = ~time, y = ~n, color = ~sporting_event, colors = c("darkblue", "darkred")) %>%
+  plot_ly(concurrent_hourly_requests, type = "scatter", mode = "lines", x = ~time, y = ~n, color = ~sporting_event, colors = c("#325ea8", "#a83e32")) %>%
     layout(
       showlegend = TRUE, 
       xaxis = list(title = "Time", 

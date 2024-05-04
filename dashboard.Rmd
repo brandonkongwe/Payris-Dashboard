@@ -271,12 +271,13 @@ renderPlotly({
     summarize(n = n())
   
   # generate interactive bar plot
-  plot_ly(path_requests, type = "bar", x = ~n, y = ~sporting_event) %>%
+  plot_ly(path_requests, type = "bar", x = ~n, y = ~sporting_event, orientation = "h") %>%
     layout(
       showlegend = FALSE,
       xaxis = list(title = 'Requests'),
-      yaxis = list(title = 'Sporting Events'), 
-      barmode = 'group')
+      yaxis = list(title = 'Sporting Events',
+                   categoryorder = "total descending"), 
+      barmode = 'group') %>% hide_colorbar()
 })
 ```
 
@@ -302,7 +303,7 @@ renderPlotly({
     summarize(n = n())
   
   # generate interactive bar plot
-  plot_ly(age_requests, type = "bar", color = ~age_group, x = ~age_group, y = ~n) %>%
+  plot_ly(age_requests, type = "bar", color = ~age_group, colors = "Dark2", x = ~age_group, y = ~n) %>%
     layout(
       showlegend = FALSE,
       xaxis = list(title = 'Age Group'),
@@ -479,6 +480,32 @@ renderPlotly({
 
 Data
 ===================================================
+
+Inputs {.sidebar data-width=170}
+-----------------------------------------------
+
+```{r}
+# create a placeholder for the download button
+uiOutput("downloadUI")
+```
+
+```{r}
+# create the actual download button
+output$downloadUI <- renderUI( {
+  downloadButton("downBtn", "Download data", style = "width:100%;")
+})
+
+# add download handling
+output$downBtn <- downloadHandler(
+  filename = function() {
+    "test_data.csv"
+  },
+  content = function(file) {
+    write.csv(readr::read_csv("log_data.csv"), file, row.names = FALSE)
+  }
+)
+```
+
 
 Row {data-height=535}
 ---------------------------------------------------

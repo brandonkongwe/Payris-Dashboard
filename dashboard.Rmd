@@ -136,6 +136,9 @@ Home
 
 Inputs {.sidebar data-width=170}
 -----------------------------------------------
+
+Select whether you want to filter the data by continent or country.
+
 ```{r}
 # filter level drop-down filter
 selectInput("filter_level",
@@ -172,16 +175,21 @@ selectInput("sport_select",
 ```
 
 
-Row 
+Row {data-height=80}
 -----------------------------------------------
 
-###
+### 
+
+<p style="font-size: 85%;"> This interactive analytical dashboard provides a detailed analysis on simulated web server log data from a proposed Payris 2024 FunOlympic Games online broadcast platform. </p>
+
+
+### 
 
 ```{r}
 # value box displaying the total number of requests
 renderValueBox({
   count_requests <- nrow(data)
-  valueBox("Total Requests", value = count_requests, color = "#326fa8")
+  valueBox(tags$p("Total Requests", style = "font-size: 100%;"), value = tags$p(count_requests, style = "font-size: 75%;"), color = "#326fa8")
 })
 ```
 
@@ -191,7 +199,7 @@ renderValueBox({
 # value box displaying the total number of successful requests
 renderValueBox({
   succ_requests <- successful_requests$n
-  valueBox("Succesful Requests", value = succ_requests, color = "#32a875")
+  valueBox(tags$p("Succesful Requests", style = "font-size: 100%;"), value = tags$p(succ_requests, style = "font-size: 75%;"), color = "#32a875")
 })
 ```
 
@@ -201,7 +209,7 @@ renderValueBox({
 # value box displaying the total number of failed requests
 renderValueBox({
   fail_requests <- failed_requests$n
-  valueBox("Failed Requests", value = fail_requests, color = "#a83244")
+  valueBox(tags$p("Failed Requests", style = "font-size: 100%;"), value = tags$p(fail_requests, style = "font-size: 75%;"), color = "#a83244")
 })
 ```
 
@@ -252,7 +260,7 @@ Row
 
 ### Viewership Preference of Sporting Events
 
-```{r fig.width=8}
+```{r fig.width=9}
 renderPlotly({
   filtered_data <- data
   
@@ -283,7 +291,7 @@ renderPlotly({
 
 ### Average Viewership by Age
 
-```{r}
+```{r fig.width=7}
 renderPlotly({
   filtered_data <- data
   
@@ -346,6 +354,8 @@ Map
 Inputs {.sidebar data-width=170}
 -----------------------------------------------
 
+Select the sporting event you wish to filter the data by.
+
 ```{r}
 # sporting event drop-down filter
 selectInput("sport_select_map",
@@ -380,33 +390,14 @@ renderPlotly({
 })
 ```
 
+
 Concurrent Sporting Events
 ===================================================
 
 Inputs {.sidebar data-width=200}
 -----------------------------------------------
 
-Select two sporting events to compare their viewership numbers at different times of the day.
-
-<hr/>
-
-```{r}
-# sporting event drop-down filter
-selectInput("concurrent_sport_select1",
-            "Sporting Event 1:",
-            choices = path_requests$sporting_event,
-            selected = path_requests$sporting_event[[1]])
-```
-
-```{r}
-# sporting event drop-down filter
-selectInput("concurrent_sport_select2",
-            "Sporting Event 2:",
-            choices = path_requests$sporting_event,
-            selected = path_requests$sporting_event[[2]])
-```
-
-<hr/>
+Select whether you want to filter the data by continent or country.
 
 ```{r}
 # filter level drop-down filter
@@ -417,6 +408,7 @@ selectInput("concurrent_filter_level",
 ```
 
 <hr/>
+
 
 ```{r}
 # # country and continent drop-down filter depending on selected filter level
@@ -440,43 +432,32 @@ Row
 
 ### Viewership Preference for Concurrently Running Sporting Events
 
-```{r}
+```{r fig.height=4}
 renderPlotly({
   filtered_data <- data
   
   # filter data depending on user selected filter level
   if (input$concurrent_filter_level == "Country") {
     filtered_data <- filtered_data %>%
-      filter(country %in% input$concurrent_country_select,
-             sporting_event %in% c(input$concurrent_sport_select1, input$concurrent_sport_select2))
+      filter(country %in% input$concurrent_country_select)
   } else {
     filtered_data <- filtered_data %>%
-      filter(continent %in% input$concurrent_continent_select,
-             sporting_event %in% c(input$concurrent_sport_select1, input$concurrent_sport_select2))
+      filter(continent %in% input$concurrent_continent_select)
   }
   
   concurrent_hourly_requests <- filtered_data %>%
+    filter(!is.na(sporting_event)) %>%
     group_by(sporting_event, time = floor_date(time, 'hour')) %>%
-    summarize(n = n())
+    summarize(Visits = n()) %>%
+    ungroup()
   
-  # generate interactive line plot
-  plot_ly(concurrent_hourly_requests, type = "scatter", mode = "lines", x = ~time, y = ~n, color = ~sporting_event, colors = c("#325ea8", "#a83e32")) %>%
-    layout(
-      showlegend = TRUE, 
-      xaxis = list(title = "Time", 
-                   rangeslider = list(visible = TRUE), 
-                   zerolinecolor = "#FFFF",
-                   zerolinewidth = 2,
-                   gridcolor = "#FFFF"), 
-      yaxis = list(title = "Requests",
-                   zerolinecolor = "#FFFF",
-                   zerolinewidth = 2,
-                   gridcolor = "#FFFF"),
-      plot_bgcolor = "#E5ECF6"
+  # generate interactive heatmap
+  plot_ly(concurrent_hourly_requests, x = ~time, y = ~sporting_event, z = ~Visits, colors = "Reds", type = "heatmap") %>%
+    layout(xaxis = list(title = "Time"),
+           yaxis = list(title = "Sporting Event")
     )
 })
 ```
-
 
 Data
 ===================================================
@@ -507,7 +488,7 @@ output$downBtn <- downloadHandler(
 ```
 
 
-Row {data-height=535}
+Row {data-height=530}
 ---------------------------------------------------
 
 ###

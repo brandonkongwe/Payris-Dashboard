@@ -451,7 +451,7 @@ renderPlotly({
     summarize(Visits = n()) %>%
     ungroup()
   
-  # generate interactive heatmap
+  # generate interactive heat map
   plot_ly(concurrent_hourly_requests, x = ~time, y = ~sporting_event, z = ~Visits, colors = "Reds", type = "heatmap") %>%
     layout(xaxis = list(title = "Time"),
            yaxis = list(title = "Sporting Event")

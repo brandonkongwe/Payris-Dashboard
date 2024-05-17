@@ -28,10 +28,10 @@ The dashboard reads web server log data stored in an Excel CSV file, which is sa
 
 ### Hardware Requirements
 The development of the dashboard was completed using the following hardware resources: 
-- ASUS VivoBook M515DA Notebook with 
--	8GB RAM, 
--	a 256GB SSD, and an
--	AMD Ryzen 3 3250U @2.60GHz CPU.
+- ASUS VivoBook M515DA Notebook
+-	8GB RAM
+-	256GB SSD
+-	AMD Ryzen 3 3250U @2.60GHz CPU
   
 ### Software Requirements
 The development of the dashboard was completed using the following software resources:

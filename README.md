@@ -64,8 +64,8 @@ The dashboard was developed on a computer running on Windows 11 Pro, which is th
 ### Deployment Procedure
 #### 1.	Setup the environment:
 -	Open RStudio and open the R project containing the dashboard.
--	Activate renv by running the renv::activate() command in the R console.
--	Install the required dependencies by running the renv::restore() command in the R console.
+-	Activate renv by running the `renv::activate()` command in the R console.
+-	Install the required dependencies by running the `renv::restore()` command in the R console.
 
 #### 2.	Run the dashboard:
 -	Ensure that the current working directory is the root of the R Project.

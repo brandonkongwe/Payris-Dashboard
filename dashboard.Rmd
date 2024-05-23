@@ -386,7 +386,7 @@ renderPlotly({
     locations = ~country,
     text = ~paste(country, '<br>', 'Total Visits: ', n),
     marker = list(line = list(color = "black", width = 0.6))
-  ) %>% colorbar(title = "Visits")
+  ) %>% colorbar(title = "Number of Viewers")
 })
 ```
 
@@ -455,7 +455,7 @@ renderPlotly({
   plot_ly(concurrent_hourly_requests, x = ~time, y = ~sporting_event, z = ~Visits, colors = "Reds", type = "heatmap") %>%
     layout(xaxis = list(title = "Time"),
            yaxis = list(title = "Sporting Event")
-    )
+    ) %>% colorbar(title = "Number of Viewers")
 })
 ```
 

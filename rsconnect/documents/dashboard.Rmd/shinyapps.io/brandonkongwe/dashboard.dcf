@@ -1,0 +1,10 @@
+name: dashboard
+title:
+username: brandonkongwe
+account: brandonkongwe
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 12065530
+bundleId: 8657111
+url: https://brandonkongwe.shinyapps.io/dashboard/
+version: 1

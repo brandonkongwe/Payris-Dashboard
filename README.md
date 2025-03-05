@@ -57,19 +57,40 @@ The dashboard was developed on a computer running on Windows 11 Pro, which is th
 # Deploying on a Local Machine
 
 ### Prerequisites
--	Download and install R (https://cran.rstudio.com/) and RStudio (https://posit.co/download/rstudio-desktop/) on your local machine.
--	Install the renv package using the `install.packages("renv")` command in the R console.
--	Clone the repository.
+-	Download and install [R](https://cran.rstudio.com/), [RStudio](https://posit.co/download/rstudio-desktop/), and [RTools](https://cran.r-project.org/bin/windows/Rtools/) on your local machine.
+-	Install the renv package:
+
+    ```bash
+    install.packages("renv")
+    ```
+-	Clone the repository:
+
+    ```bash
+    git clone https://github.com/brandonkongwe/Payris-Dashboard.git
+    ```
 
 ### Deployment Procedure
 #### 1.	Setup the environment:
 -	Open RStudio and open the R project containing the dashboard.
--	Activate renv by running the `renv::activate()` command in the R console.
--	Install the required dependencies by running the `renv::restore()` command in the R console.
+-	Activate renv by running this command in the R console:
+  
+    ```bash
+    renv::activate()
+    ```
+-	Install the required dependencies by running this command in the R console:
+
+    ```bash
+      renv::restore()
+    ```
 
 #### 2.	Run the dashboard:
 -	Ensure that the current working directory is the root of the R Project.
--	Run the dashboard locally by using the `rmarkdown::run("dashboard.Rmd")` command in the R console, where “dashboard.Rmd” is the name of the R Markdown file containing the dashboard code script. Alternatively, you can click the “Run Document” button to run the dashboard.
+-	Run the dashboard locally by using this command in the R console, where “dashboard.Rmd” is the name of the R Markdown file containing the dashboard code script:
+  
+    ```bash
+    rmarkdown::run("dashboard.Rmd")
+    ```
+    Alternatively, you can click the “Run Document” button to run the dashboard.
 
 #### 3.	Access the dashboard:
 -	Once the app is running, a local server will start and a URL will be provided in the R console.
